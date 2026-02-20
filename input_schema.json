@@ -1,0 +1,15 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "title": "Agent Input Schema",
+  "description": "Defines the input specification for this agent",
+  "properties": {
+    "message": {
+      "type": "string",
+      "description": "User message to the agent",
+      "minLength": 1
+    }
+  },
+  "required": ["message"],
+  "additionalProperties": false
+}

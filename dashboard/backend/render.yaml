@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: inside-sales-dashboard-api
+    env: python
+    rootDir: dashboard/backend
+    buildCommand: pip install .
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: GOOGLE_SERVICE_ACCOUNT_JSON
+        sync: false
+      - key: SPREADSHEET_ID_2
+        sync: false
