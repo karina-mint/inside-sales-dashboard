@@ -33,21 +33,15 @@ ROW_LEAD_NEW = "新規リード数"
 # KPI card definitions: (label, target_row, actual_row, unit)
 KPI_DEFINITIONS = [
     ("案件獲得", ROW_ANKENJIKA_TARGET, ROW_ANKENJIKA_ACTUAL, "件"),
-    ("案件獲得率", None, ROW_ANKENJIKA_RATE_ACTUAL, "%"),
     ("アポ獲得", ROW_APO_TARGET, ROW_APO_ACTUAL, "件"),
     ("通電数", None, ROW_TSUUDEN_COUNT, "件"),
     ("有効リード数", ROW_LEAD_VALID_TARGET, ROW_LEAD_VALID_ACTUAL, "件"),
     ("新規リード数", None, ROW_LEAD_NEW, "件"),
 ]
 
-# KPIカードの固定目標値（シートに存在しない）
-FIXED_KPI_TARGETS: dict[str, float] = {
-    "案件獲得率": 0.40,
-}
-
 # Funnel: (label, actual_row, benchmark_row, fallback_benchmark)
 FUNNEL_DEFINITIONS = [
-    ("案件化率", ROW_ANKENJIKA_RATE_ACTUAL, ROW_ANKENJIKA_RATE_TARGET, 0.40),
+    ("案件化率", ROW_ANKENJIKA_RATE_ACTUAL, None, 0.40),
     ("アポ獲得率", ROW_APO_RATE_TSUUDEN, None, 0.15),
     ("通電率", ROW_TSUUDEN_RATE, None, 0.50),
 ]
@@ -195,12 +189,7 @@ def parse_dashboard(raw: list[list[str]], selected_month: str = "") -> Dashboard
     # ── KPI cards ─────────────────────────────────────────────────────────────
     kpi_cards: list[KpiCard] = []
     for label, target_row, actual_row, unit in KPI_DEFINITIONS:
-        if target_row:
-            target = _get_cell(raw, row_map, target_row, sel_col)
-        elif label in FIXED_KPI_TARGETS:
-            target = FIXED_KPI_TARGETS[label]
-        else:
-            target = None
+        target = _get_cell(raw, row_map, target_row, sel_col) if target_row else None
         actual = _get_cell(raw, row_map, actual_row, sel_col) if actual_row else None
         achievement = (actual / target) if (actual is not None and target and target != 0) else None
         kpi_cards.append(KpiCard(
