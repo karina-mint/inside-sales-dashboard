@@ -13,7 +13,7 @@ export default function FunnelChart({ stages }: Props) {
   const data = stages.map((s) => ({
     name: s.label,
     実績: s.actual !== null ? +(s.actual * 100).toFixed(2) : 0,
-    ベンチマーク: +(s.benchmark * 100).toFixed(2),
+    目標: +(s.benchmark * 100).toFixed(2),
     color: metricColor(s.label),
   }))
 
@@ -46,7 +46,7 @@ export default function FunnelChart({ stages }: Props) {
             contentStyle={{ background: '#1a1d2e', border: '1px solid #2a2d3e', borderRadius: '8px' }}
             labelStyle={{ color: '#fff', fontWeight: 600 }}
             itemStyle={{ color: '#9ca3af' }}
-            formatter={(value) => [`${value}%`]}
+            formatter={(value, name) => [`${value}%`, name === '実績' ? '実績' : '目標']}
           />
           <Legend wrapperStyle={{ color: '#9ca3af', fontSize: '0.8rem' }} />
           <Bar dataKey="実績" radius={[4, 4, 0, 0]}>
@@ -54,7 +54,7 @@ export default function FunnelChart({ stages }: Props) {
               <Cell key={i} fill={entry.color} />
             ))}
           </Bar>
-          <Bar dataKey="ベンチマーク" fill="#374151" radius={[4, 4, 0, 0]} />
+          <Bar dataKey="目標" fill="#374151" radius={[4, 4, 0, 0]} />
           <ReferenceLine y={0} stroke="#2a2d3e" />
         </BarChart>
       </ResponsiveContainer>
