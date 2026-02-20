@@ -25,27 +25,25 @@ ROW_TSUUDEN_COUNT = "実績：通電数"
 
 # リード獲得セクション
 ROW_LEAD_TARGET = "目標：リード数"
+ROW_LEAD_VALID_TARGET = "目標：有効リード数"
 ROW_LEAD_VALID_ACTUAL = "実績：有効リード数"
 ROW_LEAD_VALID_RATE = "有効リード率"
 ROW_LEAD_NEW = "新規リード数"
 
 # KPI card definitions: (label, target_row, actual_row, unit)
 KPI_DEFINITIONS = [
-    ("案件化数", ROW_ANKENJIKA_TARGET, ROW_ANKENJIKA_ACTUAL, "件"),
-    ("アポ実施数", None, ROW_APO_JISSHI, "件"),
-    ("アポ獲得数", ROW_APO_TARGET, ROW_APO_ACTUAL, "件"),
+    ("案件獲得", ROW_ANKENJIKA_TARGET, ROW_ANKENJIKA_ACTUAL, "件"),
+    ("アポ獲得", ROW_APO_TARGET, ROW_APO_ACTUAL, "件"),
     ("通電数", None, ROW_TSUUDEN_COUNT, "件"),
-    ("有効リード数", None, ROW_LEAD_VALID_ACTUAL, "件"),
+    ("有効リード数", ROW_LEAD_VALID_TARGET, ROW_LEAD_VALID_ACTUAL, "件"),
     ("新規リード数", None, ROW_LEAD_NEW, "件"),
 ]
 
 # Funnel: (label, actual_row, benchmark_row, fallback_benchmark)
 FUNNEL_DEFINITIONS = [
-    ("案件化率", ROW_ANKENJIKA_RATE_ACTUAL, ROW_ANKENJIKA_RATE_TARGET, 0.0),
-    ("アポ化率（有効リード）", ROW_APO_RATE_ACTUAL, ROW_APO_RATE_TARGET, 0.0),
-    ("アポ化率（通電）", ROW_APO_RATE_TSUUDEN, None, 0.15),
+    ("案件化率", ROW_ANKENJIKA_RATE_ACTUAL, ROW_ANKENJIKA_RATE_TARGET, 0.15),
+    ("アポ獲得率", ROW_APO_RATE_TSUUDEN, None, 0.15),
     ("通電率", ROW_TSUUDEN_RATE, None, 0.50),
-    ("有効リード率", ROW_LEAD_VALID_RATE, None, 0.80),
 ]
 
 SECTION_ANKENJIKA_ROWS = [
@@ -59,19 +57,33 @@ SECTION_ANKENJIKA_ROWS = [
 SECTION_APO_ROWS = [
     ROW_APO_TARGET,
     ROW_APO_ACTUAL,
-    ROW_APO_RATE_TARGET,
-    ROW_APO_RATE_ACTUAL,
     ROW_APO_RATE_TSUUDEN,
+    "目標：アポ獲得率",
     ROW_TSUUDEN_RATE,
+    "目標：通電率",
     ROW_TSUUDEN_COUNT,
 ]
 
+# 固定ベンチマーク値（シートに存在しない行）
+FIXED_VALUE_ROWS: dict[str, float] = {
+    "目標：アポ獲得率": 0.15,
+    "目標：通電率": 0.50,
+}
+
 SECTION_LEAD_ROWS = [
-    ROW_LEAD_TARGET,
+    ROW_LEAD_VALID_TARGET,
     ROW_LEAD_VALID_ACTUAL,
-    ROW_LEAD_VALID_RATE,
     ROW_LEAD_NEW,
 ]
+
+# 表示ラベルの上書きマップ（シートのラベル → 表示名）
+LABEL_OVERRIDES: dict[str, str] = {
+    ROW_APO_TARGET: "目標：アポ獲得数",
+    ROW_APO_ACTUAL: "実績：アポ獲得数",
+    ROW_APO_RATE_TSUUDEN: "実績：アポ獲得率",
+    "目標：アポ獲得率": "目標：アポ獲得率（15%）",
+    "目標：通電率": "目標：通電率（50%）",
+}
 
 
 # ── ヘルパー ─────────────────────────────────────────────────────────────────
@@ -204,9 +216,15 @@ def parse_dashboard(raw: list[list[str]], selected_month: str = "") -> Dashboard
         rows = []
         for metric in metric_labels:
             cols: dict[str, Optional[float]] = {}
-            for month_key, col_idx in month_cols.items():
-                cols[month_key] = _get_cell(raw, row_map, metric, col_idx)
-            rows.append(MonthlyRow(metric=metric, columns=cols))
+            if metric in FIXED_VALUE_ROWS:
+                fixed_val = FIXED_VALUE_ROWS[metric]
+                for month_key in month_cols:
+                    cols[month_key] = fixed_val
+            else:
+                for month_key, col_idx in month_cols.items():
+                    cols[month_key] = _get_cell(raw, row_map, metric, col_idx)
+            display_label = LABEL_OVERRIDES.get(metric, metric)
+            rows.append(MonthlyRow(metric=display_label, columns=cols))
         return rows
 
     now_jst = datetime.now(JST).isoformat()
